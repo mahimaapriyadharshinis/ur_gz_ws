@@ -52,3 +52,15 @@ source /opt/ros/humble/setup.bash
 ros2 topic echo /gripper_camera/fragility_analysis
 
 ```
+
+```bash
+source /opt/ros/humble/setup.bash
+cd ~/vlm_scripts && python3 adaptive_grasp_controller.py
+
+```
+
+```bash
+source /opt/ros/humble/setup.bash
+ros2 topic echo /gripper_camera/fragility_analysis
+
+```
