@@ -155,6 +155,11 @@ def launch_setup(context, *args, **kwargs):
         arguments=[initial_joint_controller, "-c", "/controller_manager", "--stopped"],
         condition=UnlessCondition(start_joint_controller),
     )
+    dexhand_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["dexhand_controller", "-c", "/controller_manager"],
+    )
 
     # GZ nodes
     gz_spawn_entity = Node(
@@ -192,6 +197,12 @@ def launch_setup(context, *args, **kwargs):
         executable="parameter_bridge",
         arguments=[
             "/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock",
+            "/overhead_camera@sensor_msgs/msg/Image[ignition.msgs.Image",
+            "/gripper_camera@sensor_msgs/msg/Image[ignition.msgs.Image",
+            "/side_camera@sensor_msgs/msg/Image[ignition.msgs.Image",
+            "/camera_info@sensor_msgs/msg/CameraInfo[ignition.msgs.CameraInfo",
+            "/overhead_rgbd/depth_image@sensor_msgs/msg/Image[ignition.msgs.Image",
+            "/overhead_rgbd/camera_info@sensor_msgs/msg/CameraInfo[ignition.msgs.CameraInfo",
         ],
         output="screen",
     )
@@ -202,6 +213,7 @@ def launch_setup(context, *args, **kwargs):
         delay_rviz_after_joint_state_broadcaster_spawner,
         initial_joint_controller_spawner_stopped,
         initial_joint_controller_spawner_started,
+        dexhand_controller_spawner,
         gz_spawn_entity,
         gz_launch_description_with_gui,
         gz_launch_description_without_gui,

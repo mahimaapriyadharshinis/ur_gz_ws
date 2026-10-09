@@ -22,13 +22,21 @@
   <link name="mobile_base_link">
     <visual>
       <origin xyz="0 0 0.16" rpy="0 0 0"/>
-      <geometry><box size="0.8 0.6 0.25"/></geometry>
+      <geometry><box size="0.36 0.36 0.25"/></geometry>
       <material name="chassis_dark"><color rgba="0.2 0.2 0.2 1.0"/></material>
     </visual>
-    <collision>
-      <origin xyz="0 0 0.16" rpy="0 0 0"/>
-      <geometry><box size="0.8 0.6 0.25"/></geometry>
-    </collision>
+    <!-- Collision deliberately omitted: the UR arm is mounted directly on
+         top of this box (parent="mobile_base_link", z=0.285, right at the
+         box's own top surface), and depending on shoulder_lift/elbow angle
+         the upper arm link can swing down into the box's volume, confirmed
+         live: it visually clipped through the chassis during a grasp
+         descend. ikpy's IK has no self-collision awareness, so nothing
+         stops it from choosing such a configuration, and Gazebo's physics
+         would otherwise fight the resulting overlap with contact forces, a
+         real source of unwanted disturbance during exactly the grasp
+         motions this project is trying to stabilize. The box stays visible
+         (visual kept) and still contributes its mass/inertia for base
+         stability; it just can't physically collide with anything anymore. -->
     <inertial>
       <mass value="100.0"/>
       <origin xyz="0 0 0.16" rpy="0 0 0"/>
@@ -50,7 +58,14 @@
     <inertial><mass value="3.0"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.02"/></inertial>
   </link>
   <joint name="left_wheel_joint" type="continuous">
-    <parent link="mobile_base_link"/><child link="left_wheel"/><origin xyz="0 0.33 0.12" rpy="0 0 0"/><axis xyz="0 1 0"/>
+    <parent link="mobile_base_link"/><child link="left_wheel"/><origin xyz="0 0.20 0.12" rpy="0 0 0"/><axis xyz="0 1 0"/>
+    <!-- Never actively driven (nothing publishes /cmd_vel), so without
+         friction/damping this is a frictionless bearing: any external
+         disturbance (e.g. a bad arm move) can set the whole mobile base
+         rolling or tipping. Kept "continuous" (not "fixed") so the DiffDrive
+         plugin below, which also publishes the odom to base_footprint TF the
+         whole grasp pipeline relies on, still initializes correctly. -->
+    <dynamics damping="50.0" friction="20.0"/>
   </joint>
 
   <link name="right_wheel">
@@ -59,7 +74,8 @@
     <inertial><mass value="3.0"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.02"/></inertial>
   </link>
   <joint name="right_wheel_joint" type="continuous">
-    <parent link="mobile_base_link"/><child link="right_wheel"/><origin xyz="0 -0.33 0.12" rpy="0 0 0"/><axis xyz="0 1 0"/>
+    <parent link="mobile_base_link"/><child link="right_wheel"/><origin xyz="0 -0.20 0.12" rpy="0 0 0"/><axis xyz="0 1 0"/>
+    <dynamics damping="50.0" friction="20.0"/>
   </joint>
 
   <link name="caster_front">
@@ -68,7 +84,7 @@
     <inertial><mass value="1.0"/><inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/></inertial>
   </link>
   <joint name="caster_front_joint" type="fixed">
-    <parent link="mobile_base_link"/><child link="caster_front"/><origin xyz="0.3 0 0.06" rpy="0 0 0"/>
+    <parent link="mobile_base_link"/><child link="caster_front"/><origin xyz="0.16 0 0.06" rpy="0 0 0"/>
   </joint>
 
   <link name="caster_back">
@@ -77,7 +93,7 @@
     <inertial><mass value="1.0"/><inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/></inertial>
   </link>
   <joint name="caster_back_joint" type="fixed">
-    <parent link="mobile_base_link"/><child link="caster_back"/><origin xyz="-0.3 0 0.06" rpy="0 0 0"/>
+    <parent link="mobile_base_link"/><child link="caster_back"/><origin xyz="-0.16 0 0.06" rpy="0 0 0"/>
   </joint>
 
   <!-- Include UR Robot with Horizontal Arm Pose -->
@@ -172,7 +188,7 @@
     <plugin filename="ignition-gazebo-diff-drive-system" name="ignition::gazebo::systems::DiffDrive">
       <left_joint>left_wheel_joint</left_joint>
       <right_joint>right_wheel_joint</right_joint>
-      <wheel_separation>0.66</wheel_separation>
+      <wheel_separation>0.40</wheel_separation>
       <wheel_radius>0.12</wheel_radius>
       <odom_publish_frequency>50</odom_publish_frequency>
       <topic>/cmd_vel</topic>
@@ -191,106 +207,127 @@
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Middle_Pitch">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Ring_Pitch">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Pinky_Pitch">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Index_Flexor">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Middle_Flexor">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Ring_Flexor">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Pinky_Flexor">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Index_DIP">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Middle_DIP">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Ring_DIP">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Pinky_DIP">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Thumb_Yaw">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Thumb_Roll">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Thumb_Flexor">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Thumb_DIP">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Index_Yaw">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Middle_Yaw">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Ring_Yaw">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Pinky_Yaw">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
     <joint name="R_Thumb_Pitch">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+      <state_interface name="effort"/>
     </joint>
   </ros2_control>
 </robot>

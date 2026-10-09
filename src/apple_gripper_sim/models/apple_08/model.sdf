@@ -27,6 +27,11 @@
               <mu>0.65</mu>
               <mu2>0.65</mu2>
             </ode>
+            <torsional>
+              <coefficient>1.0</coefficient>
+              <use_patch_radius>false</use_patch_radius>
+              <surface_radius>0.03987</surface_radius>
+            </torsional>
           </friction>
           <contact>
             <ode>
